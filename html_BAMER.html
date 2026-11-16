@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QUERSHIELD — Simulasi Interaktif Presentasi KTI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
+            user-select: none;
+        }
+        /* Animasi pernapasan paru-paru */
+        @keyframes lungBreathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.07); }
+        }
+        .lung-rest { animation: lungBreathe 3.2s ease-in-out infinite; transform-origin: center; }
+        .lung-sport { animation: lungBreathe 1.1s ease-in-out infinite; transform-origin: center; }
+        .lung-child-sport { animation: lungBreathe 0.72s ease-in-out infinite; transform-origin: center; }
+
+        /* Animasi partikel polusi meluncur ke paru-paru */
+        @keyframes pmTravelMouth {
+            0% { transform: translate(0, 0) scale(0.8); opacity: 0; }
+            15% { opacity: 1; }
+            45% { transform: translate(62px, 4px) scale(1); opacity: 1; }
+            75% { transform: translate(116px, 28px) scale(0.95); opacity: 0.95; }
+            100% { transform: translate(118px, 76px) scale(0.75); opacity: 0; }
+        }
+        @keyframes pmBlockedNose {
+            0% { transform: translate(0, 0) scale(0.8); opacity: 0; }
+            25% { opacity: 1; }
+            60% { transform: translate(48px, -6px) scale(0.95); opacity: 0.9; }
+            85% { transform: translate(54px, -2px) scale(0.6); opacity: 0.4; }
+            100% { transform: translate(52px, 4px) scale(0.2); opacity: 0; }
+        }
+        .pm-particle-mouth { animation: pmTravelMouth 1.9s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+        .pm-particle-nose { animation: pmBlockedNose 2.4s ease-out infinite; }
+
+        /* Animasi gelembung & tetesan filtrat */
+        @keyframes floatBubble {
+            0%, 100% { transform: translateY(0px); opacity: 0.6; }
+            50% { transform: translateY(-6px); opacity: 1; }
+        }
+        .bubble-anim { animation: floatBubble 1.8s ease-in-out infinite; }
+
+        @keyframes dripDown {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(24px); opacity: 0; }
+        }
+        .drip-anim { animation: dripDown 1.1s linear infinite; }
+
+        /* Animasi uap oven & pemanasan */
+        @keyframes steamRise {
+            0% { transform: translateY(0) scale(0.9); opacity: 0.8; }
+            100% { transform: translateY(-22px) scale(1.2); opacity: 0; }
+        }
+        .steam-anim { animation: steamRise 1.6s ease-out infinite; }
+
+        /* Animasi partikel asap di sel paru Stage 5 */
+        @keyframes smokeDrop {
+            0% { transform: translateY(0); opacity: 0.9; }
+            100% { transform: translateY(48px); opacity: 0.2; }
+        }
+        .smoke-drop { animation: smokeDrop 2s linear infinite; }
+
+        /* Animasi laser pemindai kamera HP di Stage 4 */
+        @keyframes laserSweep {
+            0%, 100% { top: 12%; }
+            50% { top: 82%; }
+        }
+        .laser-scan-active {
+            animation: laserSweep 1.1s ease-in-out infinite;
+        }
+
+        /* Scrollbar tipis rapi */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
+
+        .draggable-item {
+            cursor: grab;
+            transition: transform 0.15s ease, border-color 0.2s ease;
+        }
+        .draggable-item:active { cursor: grabbing; transform: scale(0.96); }
+        .drop-target.drag-over {
+            border-color: #38bdf8 !important;
+            background-color: rgba(14, 165, 233, 0.08) !important;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col">
+
+    <!-- =========================================================
+         HEADER & NAVIGASI 5 TAHAP PRESENTASI
+         ========================================================= -->
+    <header class="bg-slate-900/95 border-b border-slate-800 px-4 py-2 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-rose-600 flex items-center justify-center font-extrabold text-white text-sm shadow">
+                Q
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-sm font-extrabold tracking-tight text-white">QUERSHIELD</h1>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold">
+                        Prototipe Gagasan KTI
+                    </span>
+                </div>
+                <p class="text-[10px] text-slate-400">Edible Film Antioksidan Kuersetin Kulit Bawang Merah untuk Proteksi Saluran Napas</p>
+            </div>
+        </div>
+
+        <!-- Tab Navigasi 5 Tahap -->
+        <nav class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+            <button id="nav-1" onclick="goToStage(1)" class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-rose-600 text-white transition">
+                1. Akar Masalah
+            </button>
+            <button id="nav-2" onclick="goToStage(2)" class="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition">
+                2. Bahan & Ekstraksi
+            </button>
+            <button id="nav-3" onclick="goToStage(3)" class="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition">
+                3. Formulasi Film
+            </button>
+            <button id="nav-4" onclick="goToStage(4)" class="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition">
+                4. Uji Warna DPPH
+            </button>
+            <button id="nav-5" onclick="goToStage(5)" class="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition">
+                5. Mekanisme & Hasil
+            </button>
+            <div class="w-px h-4 bg-slate-800 mx-0.5"></div>
+            <button onclick="openNotesModal()" class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition flex items-center gap-1">
+                <span>📋</span> Notes Ilmiah
+            </button>
+        </nav>
+    </header>
+
+    <!-- Modal Notes Ilmiah Lengkap (Ringkasan Presentasi & Kejujuran Ilmiah) -->
+    <div id="notes-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/60 shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="text-amber-400 text-base">📋</span>
+                    <h2 class="text-sm font-extrabold text-white">Notes Ilmiah & Pegangan Presentasi QUERSHIELD</h2>
+                </div>
+                <button onclick="closeNotesModal()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white text-xs font-bold transition">
+                    ✕ Tutup
+                </button>
+            </div>
+            <div class="p-4 overflow-y-auto space-y-3 text-xs text-slate-300 leading-relaxed">
+                <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800">
+                    <div class="font-bold text-rose-300 mb-1">1. Akar Masalah Fisiologis Anak & Remaja</div>
+                    <p>• Kualitas udara kota besar sering masuk kategori <b>Tidak Sehat</b> menurut Indeks Standar Pencemar Udara (ISPU).</p>
+                    <p>• Anak/remaja bernapas lebih cepat per kilogram berat badan dan paru-parunya masih berkembang, sehingga beban debu halus (PM2.5) per kg berat badan jauh lebih tinggi dibanding dewasa.</p>
+                    <p>• Saat olahraga, napas naik 2–3× lipat dan beralih lewat mulut (melewati saringan bulu hidung). Data Ikatan Dokter Anak Indonesia (IDAI): <b>13,3% anak usia sekolah tanpa keluhan</b> sudah mengalami penurunan fungsi paru.</p>
+                </div>
+                <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800">
+                    <div class="font-bold text-sky-300 mb-1">2. Prinsip Ekstraksi Maserasi Etanol 70%</div>
+                    <p>• Limbah kulit bawang merah dipilih karena berbiaya nol dan kaya <b>kuersetin</b> (bersifat semi-polar) di dinding sel/vakuola.</p>
+                    <p>• Etanol 70% bersifat semi-polar sehingga efektif menarik kuersetin melalui proses <b>difusi pasif</b> yang butuh waktu perendaman, lalu dipisahkan lewat penyaringan fisik (kertas saring).</p>
+                    <p>• <i>Batas Jujur:</i> Tanpa alat kromatografi cair (HPLC) atau spektrofotometer, kadar pasti kuersetin tidak diklaim—yang dipastikan adalah kebenaran prinsip ekstraksinya.</p>
+                </div>
+                <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800">
+                    <div class="font-bold text-amber-300 mb-1">3. Formulasi Edible Film (Solvent Casting)</div>
+                    <p>• <b>Gelatinisasi pati (maizena)</b> membentuk matriks pengikat, sementara <b>gliserin</b> bertindak sebagai pelentur (<i>plasticizer</i>) agar tidak getas.</p>
+                    <p>• Ekstrak dicampur saat suhu <b>hangat kuku</b> agar kuersetin tidak rusak karena panas berlebih. Saat dikonsumsi, air liur melarutkan jaringan pati yang suka air (hidrofilik) untuk melepas kuersetin.</p>
+                </div>
+                <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800">
+                    <div class="font-bold text-purple-300 mb-1">4. Verifikasi Kualitatif DPPH & Mekanisme Biologis</div>
+                    <p>• Perubahan warna cairan uji radikal bebas (DPPH) dari <b>ungu pekat ke kuning pucat</b> membuktikan aktivitas antioksidan tetap bertahan pascapemanasan & pencetakan.</p>
+                    <p>• Secara pustaka, kuersetin melawan stres oksidatif/radikal bebas (ROS) dan kematian sel akibat zat besi (<i>ferroptosis</i>) lewat penangkapan radikal langsung serta aktivasi <b>jalur sinyal Nrf2</b> (dengan catatan kejujuran dari studi Ding dkk., 2024 bahwa hasil jalur Nrf2 belum sepenuhnya seragam di semua riset).</p>
+                </div>
+                <div class="bg-amber-950/30 p-3 rounded-xl border border-amber-500/40 text-slate-200">
+                    <div class="font-bold text-amber-300 mb-1">5. Posisi Produk & Bukti Presentasi</div>
+                    <p>• Konsep akhir: lembaran <b>4×4 cm</b> cokelat keemasan dalam sachet kedap udara, dikonsumsi ±15 menit sebelum aktivitas fisik sebagai <b>proteksi tambahan</b> (bukan pengganti masker/APD).</p>
+                    <p>• Yang dibawa ke juri adalah <b>prototipe awal praktikum</b> sebagai bukti prinsip proses pembuatan, bukan produk akhir teroptimasi.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifikasi Non-Blocking -->
+    <div id="toast-box" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-900 border border-amber-500/50 text-white px-4 py-2 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs">
+            <span class="text-amber-400 text-base">💡</span>
+            <div>
+                <div id="toast-title" class="font-bold text-amber-300">Info</div>
+                <div id="toast-msg" class="text-slate-300 text-[11px]">Pesan</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         AREA UTAMA (5 STAGE INTERAKTIF)
+         ========================================================= -->
+    <main class="flex-1 min-h-0 p-3 overflow-hidden">
+
+        <!-- =========================================================
+             STAGE 1: ALUR BESAR & AKAR MASALAH (ANATOMI MANUSIA)
+             ========================================================= -->
+        <section id="stage-1" class="h-full min-h-0 grid grid-cols-12 gap-3.5">
+            <!-- Panel Kiri (7 Kolom): Alur Besar 5 Simpul & Simulasi Anatomi -->
+            <div class="col-span-7 min-h-0 bg-slate-900/90 rounded-2xl border border-slate-800 p-3.5 flex flex-col justify-between overflow-hidden">
+                <!-- Alur Besar Satu Layar -->
+                <div class="bg-slate-950/90 rounded-xl border border-slate-800 p-2 shrink-0">
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Alur Besar Gagasan (Satu Layar)</div>
+                    <div class="grid grid-cols-5 gap-1.5 text-center text-[10px]">
+                        <div class="bg-rose-950/50 border border-rose-500/40 rounded-lg p-1.5">
+                            <div class="font-bold text-rose-300">1. Masalah</div>
+                            <div class="text-slate-300 text-[9px] mt-0.5">Debu halus udara & olahraga</div>
+                        </div>
+                        <div class="bg-amber-950/50 border border-amber-500/40 rounded-lg p-1.5">
+                            <div class="font-bold text-amber-300">2. Bahan</div>
+                            <div class="text-slate-300 text-[9px] mt-0.5">Limbah kulit bawang merah</div>
+                        </div>
+                        <div class="bg-sky-950/50 border border-sky-500/40 rounded-lg p-1.5">
+                            <div class="font-bold text-sky-300">3. Ekstraksi</div>
+                            <div class="text-slate-300 text-[9px] mt-0.5">Perendaman etanol 70%</div>
+                        </div>
+                        <div class="bg-purple-950/50 border border-purple-500/40 rounded-lg p-1.5">
+                            <div class="font-bold text-purple-300">4. Formulasi</div>
+                            <div class="text-slate-300 text-[9px] mt-0.5">Cetak lembaran tipis (film)</div>
+                        </div>
+                        <div class="bg-emerald-950/50 border border-emerald-500/40 rounded-lg p-1.5">
+                            <div class="font-bold text-emerald-300">5. Hasil</div>
+                            <div class="text-slate-300 text-[9px] mt-0.5">Dimakan sebelum olahraga</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kontrol Simulasi Anatomi -->
+                <div class="flex flex-wrap items-center justify-between gap-2 my-1.5 shrink-0">
+                    <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                        <button id="btn-group-child" onclick="setAgeGroup('child')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-600 text-white transition">
+                            🧒 Anak / Remaja
+                        </button>
+                        <button id="btn-group-adult" onclick="setAgeGroup('adult')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition">
+                            🧑 Orang Dewasa
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                        <button id="btn-mode-rest" onclick="setBreathMode('rest')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition">
+                            😌 Istirahat (Hidung)
+                        </button>
+                        <button id="btn-mode-sport" onclick="setBreathMode('sport')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-600 text-white transition">
+                            🏃 Olahraga (Mulut 2-3×)
+                        </button>
+                    </div>
+
+                    <button onclick="resetStage1()" class="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">
+                        ↻ Ulangi Tahap
+                    </button>
+                </div>
+
+                <!-- Visual Anatomi Kepala hingga Paru-paru Manusia -->
+                <div class="flex-1 min-h-0 bg-slate-950/80 rounded-2xl border border-slate-800 p-2.5 grid grid-cols-12 gap-2 items-center">
+                    <div class="col-span-7 h-full flex items-center justify-center">
+                        <svg viewBox="0 0 320 225" class="w-full h-full max-h-56">
+                            <defs>
+                                <linearGradient id="headGrad" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stop-color="#334155" />
+                                    <stop offset="100%" stop-color="#0f172a" />
+                                </linearGradient>
+                                <linearGradient id="lungGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#fb7185" />
+                                    <stop offset="100%" stop-color="#be123c" />
+                                </linearGradient>
+                            </defs>
+
+                            <!-- Udara Polusi di Depan Wajah -->
+                            <text x="16" y="20" fill="#fb7185" font-size="8.5" font-weight="bold">Udara Tercemar (Debu Halus PM2.5)</text>
+                            <circle cx="26" cy="48" r="3.8" fill="#f43f5e" opacity="0.75" />
+                            <circle cx="42" cy="70" r="3.2" fill="#fb7185" opacity="0.65" />
+                            <circle cx="22" cy="92" r="4" fill="#e11d48" opacity="0.75" />
+
+                            <!-- Siluet Profil Kepala, Leher & Bahu Manusia yang Halus & Anatomis -->
+                            <path d="M138 18
+                                     C178 16 208 42 210 78
+                                     C211 96 202 112 194 124
+                                     C191 130 192 138 198 144
+                                     L242 162
+                                     C252 167 256 176 256 188
+                                     L256 216 L96 216 L96 188
+                                     C96 176 100 167 110 162
+                                     L132 152
+                                     C136 146 136 138 132 133
+                                     C116 133 108 128 108 120
+                                     C108 115 113 113 113 110
+                                     C105 109 102 105 104 100
+                                     C100 98 96 94 98 88
+                                     C101 82 111 74 114 62
+                                     C115 38 122 20 138 18 Z"
+                                  fill="url(#headGrad)" stroke="#64748b" stroke-width="2" stroke-linejoin="round" />
+
+                            <!-- Rongga Hidung (Atas) + Jalur Napas Halus -->
+                            <path d="M100 89 C120 80 146 82 168 95 L168 105 C146 96 122 95 104 97 Z"
+                                  fill="#020617" stroke="#38bdf8" stroke-width="1.3" stroke-linejoin="round" />
+                            <!-- Bulu Hidung (Silia/Filter Alami) -->
+                            <g stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round">
+                                <line x1="112" y1="86" x2="115" y2="93" />
+                                <line x1="120" y1="84" x2="122" y2="92" />
+                                <line x1="128" y1="84" x2="129" y2="92" />
+                                <line x1="115" y1="96" x2="118" y2="90" />
+                                <line x1="124" y1="96" x2="126" y2="90" />
+                            </g>
+                            <text x="134" y="68" text-anchor="middle" fill="#7dd3fc" font-size="8" font-weight="bold">Hidung (Ada Bulu Penyaring)</text>
+
+                            <!-- Rongga Mulut (Bawah - Jalur Terbuka Lurus ke Tenggorokan) -->
+                            <path id="mouth-cavity" d="M105 111 C126 109 148 111 168 117 L168 127 C148 123 126 121 107 119 Z"
+                                  fill="#4c0519" stroke="#fb7185" stroke-width="1.4" stroke-linejoin="round" />
+                            <text x="86" y="138" text-anchor="middle" fill="#fda4af" font-size="7.8" font-weight="bold">Mulut (Tanpa Saringan)</text>
+
+                            <!-- Tenggorokan (Trakea) & Cabang Bronkus -->
+                            <path d="M166 95 L178 95 L178 158 L166 158 Z" fill="#1e293b" stroke="#64748b" stroke-width="1.4" />
+                            <!-- Cabang Bronkus Kiri & Kanan -->
+                            <path d="M168 155 L154 168 M176 155 L190 168" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" />
+
+                            <!-- Paru-Paru (Berdenyut halus sesuai ritme napas) -->
+                            <g id="lungs-graphic" class="lung-child-sport">
+                                <!-- Paru Kiri -->
+                                <path d="M165 154 C144 154 130 172 132 198 C134 208 154 208 166 198 Z"
+                                      fill="url(#lungGrad)" opacity="0.9" stroke="#fda4af" stroke-width="1.5" />
+                                <!-- Paru Kanan -->
+                                <path d="M179 154 C200 154 214 172 212 198 C210 208 190 208 178 198 Z"
+                                      fill="url(#lungGrad)" opacity="0.9" stroke="#fda4af" stroke-width="1.5" />
+                            </g>
+                            <text x="172" y="219" text-anchor="middle" fill="#f8fafc" font-size="8.5" font-weight="bold">Paru-Paru</text>
+
+                            <!-- Partikel Polusi Bergerak (Mode Hidung - Tertahan di Bulu Hidung) -->
+                            <g id="particles-nose-group" class="hidden">
+                                <circle cx="66" cy="92" r="3.4" fill="#fbbf24" class="pm-particle-nose" />
+                                <circle cx="76" cy="94" r="3" fill="#fde047" class="pm-particle-nose" style="animation-delay:0.8s" />
+                                <text x="86" y="52" fill="#fde047" font-size="7.5" font-weight="bold">Sebagian tersaring bulu hidung</text>
+                            </g>
+
+                            <!-- Partikel Polusi Bergerak Mulus (Mode Mulut -> Tenggorokan -> Paru-Paru) -->
+                            <g id="particles-mouth-group">
+                                <circle cx="56" cy="113" r="3.6" fill="#f43f5e" class="pm-particle-mouth" />
+                                <circle cx="64" cy="115" r="3.2" fill="#fb7185" class="pm-particle-mouth" style="animation-delay:0.45s" />
+                                <circle cx="52" cy="114" r="3.8" fill="#e11d48" class="pm-particle-mouth" style="animation-delay:0.9s" />
+                                <circle cx="60" cy="116" r="3.2" fill="#f43f5e" class="pm-particle-mouth" style="animation-delay:1.35s" />
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- Indikator Perbandingan Kontras Anak vs Dewasa -->
+                    <div class="col-span-5 space-y-2 bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                        <div>
+                            <div class="text-[10px] text-slate-400">Subjek & Kondisi Aktivitas</div>
+                            <div id="sim-subject-title" class="text-xs font-extrabold text-amber-300">Anak/Remaja • Olahraga</div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-1.5 text-center">
+                            <div class="bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+                                <div class="text-[9px] text-slate-400">Laju Napas</div>
+                                <div id="sim-breath-rate" class="text-xs font-extrabold text-rose-400">~55× / menit</div>
+                            </div>
+                            <div class="bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+                                <div class="text-[9px] text-slate-400">Filter Hidung</div>
+                                <div id="sim-filter-status" class="text-xs font-extrabold text-rose-400">Terlewati</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-[10px] mb-1">
+                                <span class="text-slate-300">Beban Debu per Kg Berat Badan</span>
+                                <span id="sim-dose-label" class="font-bold text-rose-400">Sangat Tinggi (95%)</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                                <div id="sim-dose-bar" class="h-full bg-gradient-to-r from-amber-500 to-rose-600 transition-all duration-500" style="width: 95%"></div>
+                            </div>
+                        </div>
+
+                        <p id="sim-physiological-note" class="text-[10px] text-slate-300 leading-snug bg-slate-950/70 p-2 rounded-lg border border-slate-800">
+                            Paru-paru anak masih berkembang dan menghirup udara jauh lebih banyak per kg berat badan. Saat olahraga, napas lewat mulut membuat debu halus masuk langsung ke paru bagian bawah.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Kanan (5 Kolom): 4 Poin Akar Masalah (Bahasa Awam) -->
+            <div class="col-span-5 min-h-0 bg-slate-900/90 rounded-2xl border border-slate-800 p-3.5 flex flex-col overflow-hidden">
+                <h3 class="text-sm font-bold text-white border-b border-slate-800 pb-2 shrink-0">Kenapa Anak & Remaja Jauh Lebih Rentan?</h3>
+                <div class="flex-1 min-h-0 overflow-y-auto space-y-2.5 pr-1 my-2">
+                    <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">
+                        <div class="text-xs font-bold text-amber-300">1. Udara Berpolusi Kategori "Tidak Sehat"</div>
+                        <p class="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                            Kualitas udara di banyak kota besar Indonesia sering masuk status <b>"Tidak Sehat"</b> menurut <b>Indeks Standar Pencemar Udara (ISPU)</b> akibat asap kendaraan, industri, maupun kebakaran hutan musiman.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">
+                        <div class="text-xs font-bold text-sky-300">2. Fisiologi Tubuh Anak Berbeda dengan Dewasa</div>
+                        <p class="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                            Dibandingkan orang dewasa, anak dan remaja bernapas lebih cepat per kilogram berat badannya dan struktur paru-parunya masih dalam tahap pertumbuhan—sehingga <b>dosis debu halus (PM2.5, partikel polusi mikroskopis)</b> yang terhirup per satuan berat badan jauh lebih besar.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">
+                        <div class="text-xs font-bold text-purple-300">3. Olahraga Meningkatkan Napas 2–3× Lipat</div>
+                        <p class="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                            Saat pelajaran olahraga atau bermain aktif, frekuensi napas melonjak 2–3 kali lipat dan beralih dari hidung ke mulut. Akibatnya, penyaringan alami bulu hidung terlewati dan polusi masuk lebih dalam.
+                        </p>
+                    </div>
+
+                    <div class="bg-rose-950/30 p-2.5 rounded-xl border border-rose-500/40">
+                        <div class="text-xs font-bold text-rose-300">4. Penurunan Fungsi Paru Terjadi Diam-Diam</div>
+                        <p class="text-[11px] text-slate-200 mt-1 leading-relaxed">
+                            Data <b>Ikatan Dokter Anak Indonesia (IDAI)</b> menemukan <b>13,3% anak usia sekolah tanpa keluhan batuk/sesak</b> pun ternyata sudah mengalami penurunan fungsi paru akibat menghirup debu polusi.
+                        </p>
+                    </div>
+                </div>
+
+                <button onclick="goToStage(2)" class="w-full shrink-0 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg transition">
+                    Lanjut ke Tahap 2: Bahan & Ekstraksi Maserasi →
+                </button>
+            </div>
+        </section>
+
+        <!-- =========================================================
+             STAGE 2: PENGAMBILAN BAHAN & EKSTRAKSI MASERASI ETANOL
+             ========================================================= -->
+        <section id="stage-2" class="hidden h-full min-h-0 grid grid-cols-12 gap-3.5">
+            <!-- Panel Kiri (7 Kolom): Meja Simulasi Maserasi & Penyaringan -->
+            <div class="col-span-7 min-h-0 bg-slate-900/90 rounded-2xl border border-slate-800 p-3.5 flex flex-col justify-between overflow-hidden">
+                <div class="flex items-center justify-between shrink-0">
+                    <div>
+                        <h2 class="text-sm font-bold text-white">Simulasi Ekstraksi & Penyaringan Filtrat</h2>
+                        <p class="text-[11px] text-slate-400">Seret atau klik bahan & alat secara berurutan ke meja lab</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="s1-status" class="text-[10px] px-2.5 py-1 rounded-full bg-slate-800 text-amber-300 font-semibold">
+                            Siap Ekstraksi
+                        </span>
+                        <button onclick="resetStage2()" class="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">
+                            ↻ Ulangi Tahap
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Drop Zone Gelas Kimia & Unit Corong Penyaring -->
+                <div id="s1-dropzone" data-drop="stage1" class="drop-target my-2 bg-slate-950/80 rounded-2xl border-2 border-dashed border-slate-700 p-3 flex-1 min-h-0 flex items-center justify-around relative transition-all">
+                    <svg viewBox="0 0 330 205" class="w-72 h-48 overflow-visible">
+                        <!-- === KIRI: GELAS MASERASI === -->
+                        <text x="85" y="16" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-weight="bold">1. Gelas Rendam</text>
+                        <ellipse cx="85" cy="190" rx="52" ry="8" fill="rgba(0,0,0,0.5)" />
+                        <!-- Batang Pengaduk Kaca -->
+                        <g id="glass-rod-in-beaker" opacity="0">
+                            <line x1="108" y1="22" x2="72" y2="170" stroke="#e2e8f0" stroke-width="4.5" stroke-linecap="round" />
+                        </g>
+                        <!-- Cairan Etanol 70% -->
+                        <g id="beaker-liquid-group" opacity="0" class="transition-opacity duration-500">
+                            <path id="beaker-liquid-fill" d="M42 75 L128 75 L128 172 Q128 182 118 182 L52 182 Q42 182 42 172 Z" fill="#38bdf8" opacity="0.35" class="transition-colors duration-500" />
+                            <ellipse id="liquid-vortex" cx="85" cy="75" rx="43" ry="6" fill="#7dd3fc" opacity="0.45" />
+                            <circle cx="65" cy="145" r="2.8" fill="#fde68a" class="bubble-anim" />
+                            <circle cx="102" cy="155" r="2.2" fill="#fde68a" class="bubble-anim" style="animation-delay:0.4s" />
+                            <circle cx="85" cy="135" r="3" fill="#fde68a" class="bubble-anim" style="animation-delay:0.8s" />
+                        </g>
+                        <!-- Serbuk Kulit Bawang Merah di Dasar Gelas -->
+                        <g id="beaker-powder-group" opacity="0" class="transition-opacity duration-500">
+                            <path d="M47 170 Q85 158 123 170 L126 180 Q85 186 44 180 Z" fill="#9f1239" />
+                            <circle cx="65" cy="172" r="2.8" fill="#be123c" />
+                            <circle cx="86" cy="170" r="3.2" fill="#881337" />
+                            <circle cx="106" cy="173" r="2.8" fill="#be123c" />
+                        </g>
+                        <!-- Dinding Gelas Kimia -->
+                        <path d="M38 44 L38 174 Q38 186 50 186 L120 186 Q132 186 132 174 L132 44" fill="none" stroke="#94a3b8" stroke-width="2.8" stroke-linecap="round" />
+                        <line x1="48" y1="85" x2="60" y2="85" stroke="#64748b" stroke-width="1.8" />
+                        <line x1="48" y1="120" x2="64" y2="120" stroke="#64748b" stroke-width="1.8" />
+                        <line x1="48" y1="155" x2="60" y2="155" stroke="#64748b" stroke-width="1.8" />
+
+                        <!-- Panah Penuangan ke Corong Saring -->
+                        <g id="filter-pour-arrow" opacity="0.25" class="transition-opacity duration-500">
+                            <path d="M138 62 Q165 44 192 58" fill="none" stroke="#fb7185" stroke-width="2.5" stroke-dasharray="4 3" />
+                            <polygon points="190,53 198,60 188,62" fill="#fb7185" />
+                        </g>
+
+                        <!-- === KANAN: CORONG KERTAS SARING & GELAS FILTRAT === -->
+                        <text x="242" y="16" text-anchor="middle" fill="#34d399" font-size="8.5" font-weight="bold">2. Corong Saring & Filtrat</text>
+                        <ellipse cx="242" cy="190" rx="46" ry="7" fill="rgba(0,0,0,0.5)" />
+
+                        <!-- Gelas Penampung Filtrat (Bawah) -->
+                        <path id="filtrate-collected-liquid" d="M204 142 L280 142 L280 175 Q280 183 272 183 L212 183 Q204 183 204 175 Z" fill="#9f1239" opacity="0" class="transition-opacity duration-700" />
+                        <path d="M201 114 L201 176 Q201 186 211 186 L273 186 Q283 186 283 176 L283 114" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" />
+
+                        <!-- Tetesan Ekstrak Jernih Turun dari Ujung Corong -->
+                        <g id="filter-drip-group" opacity="0">
+                            <circle cx="242" cy="118" r="3" fill="#be123c" class="drip-anim" />
+                            <circle cx="242" cy="126" r="2.5" fill="#e11d48" class="drip-anim" style="animation-delay:0.5s" />
+                        </g>
+
+                        <!-- Corong Kaca & Kertas Saring (Atas) -->
+                        <polygon points="196,42 288,42 250,94 250,115 234,115 234,94" fill="rgba(148,163,184,0.12)" stroke="#cbd5e1" stroke-width="2" stroke-linejoin="round" />
+                        <!-- Kerucut Kertas Saring Putih -->
+                        <polygon points="203,45 281,45 242,92" fill="rgba(248,250,252,0.22)" stroke="#f8fafc" stroke-width="1.2" stroke-dasharray="3 2" />
+                        <!-- Ampas Kulit Bawang Tertahan di Kertas Saring -->
+                        <g id="filter-residue-group" opacity="0" class="transition-opacity duration-500">
+                            <path d="M218 64 Q242 74 266 64 L242 90 Z" fill="#7f1d1d" />
+                            <text x="242" y="34" text-anchor="middle" fill="#fda4af" font-size="7.2" font-weight="bold">Ampas Tertahan</text>
+                        </g>
+                        <text id="filtrate-cup-label" x="242" y="168" text-anchor="middle" fill="#64748b" font-size="7.5" font-weight="bold">Wadah Filtrat</text>
+                    </svg>
+
+                    <!-- Status Parameter Ekstraksi -->
+                    <div class="w-44 space-y-2 text-xs">
+                        <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                            <div class="text-[10px] text-slate-400">Progres Difusi (Perendaman)</div>
+                            <div id="stir-progress-text" class="font-bold text-amber-300 mt-0.5">0% (Menunggu bahan)</div>
+                            <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden mt-1.5">
+                                <div id="stir-progress-bar" class="h-full bg-gradient-to-r from-amber-500 to-rose-600 transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                            <div class="text-[10px] text-slate-400">Status Penyaringan</div>
+                            <div id="filtrate-status-text" class="font-bold text-slate-300 mt-0.5">Belum Disaring</div>
+                        </div>
+
+                        <p class="text-[10px] text-slate-400 leading-snug">
+                            Tips: Geser <b>Batang Pengaduk</b> bolak-balik di atas gelas atau klik berulang kali untuk melihat perubahan warna ekstrak.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Rak Alat & Bahan Tahap 2 -->
+                <div class="grid grid-cols-4 gap-2 shrink-0">
+                    <div id="drag-s1-powder" draggable="true" data-action="powder" onclick="addOnionPowder()" class="draggable-item bg-slate-950 border-2 border-slate-700 hover:border-rose-500 rounded-xl p-2 flex flex-col items-center text-center">
+                        <span class="text-xl pointer-events-none">🧅</span>
+                        <span class="text-[10px] font-bold text-white mt-1">1. Serbuk Kulit Bawang</span>
+                        <span id="badge-s1-1" class="text-[9px] text-rose-400">Limbah (0 biaya)</span>
+                    </div>
+
+                    <div id="drag-s1-ethanol" draggable="true" data-action="ethanol" onclick="addEthanol()" class="draggable-item bg-slate-950 border-2 border-slate-700 hover:border-sky-500 rounded-xl p-2 flex flex-col items-center text-center">
+                        <span class="text-xl pointer-events-none">🧪</span>
+                        <span class="text-[10px] font-bold text-white mt-1">2. Pelarut Etanol 70%</span>
+                        <span id="badge-s1-2" class="text-[9px] text-sky-400">Pelarut Semi-Polar</span>
+                    </div>
+
+                    <div id="drag-s1-rod" draggable="true" data-action="stir" onclick="stirStepClick()" class="draggable-item bg-slate-950 border-2 border-slate-700 hover:border-amber-500 rounded-xl p-2 flex flex-col items-center text-center">
+                        <span class="text-xl pointer-events-none">🥢</span>
+                        <span class="text-[10px] font-bold text-white mt-1">3. Aduk & Rendam</span>
+                        <span id="badge-s1-3" class="text-[9px] text-amber-400">Geser / Klik</span>
+                    </div>
+
+                    <div id="drag-s1-filter" draggable="true" data-action="filter" onclick="filterExtract()" class="draggable-item bg-slate-950 border-2 border-slate-700 hover:border-emerald-500 rounded-xl p-2 flex flex-col items-center text-center">
+                        <span class="text-xl pointer-events-none">⏳</span>
+                        <span class="text-[10px] font-bold text-white mt-1">4. Saring Filtrat</span>
+                        <span id="badge-s1-4" class="text-[9px] text-emerald-400">Pisahkan Ampas</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Kanan (5 Kolom): Penjelasan Mekanisme Bahan & Ekstraksi -->
+            <div class="col-span-5 min-h-0 bg-slate-900/90 rounded-2xl border border-slate-800 p-3.5 flex flex-col overflow-hidden">
+                <h3 class="text-sm font-bold text-white border-b border-slate-800 pb-2 shrink-0">Mekanisme Bahan & Maserasi Etanol</h3>
+                <div class="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1 my-2">
+                    <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">
+                        <div class="text-xs font-bold text-rose-300">1. Kenapa Limbah Kulit Bawang Merah?</div>
+                        <p class="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                            Kulit terluar bawang merah umumnya dibuang (biaya bahan baku nol), padahal secara pustaka menyimpan senyawa antioksidan <b>kuersetin</b> yang tinggi di dalam dinding sel dan vakuola tanamannya.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">
+                        <div class="text-xs font-bold text-sky-300">2. Prinsip Pelarut Semi-Polar (Etanol 70%)</div>
+                        <p class="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                            Kuersetin bersifat <b>semi-polar</b> (tidak mudah larut di air murni), sehingga paling cocok ditarik menggunakan pelarut <b>etanol 70%</b> yang juga bersifat semi-polar.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">
+                        <div class="text-xs font-bold text-amber-300">3. Difusi Pasif Butuh Waktu Perendaman</div>
+                        <p class="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                            Etanol menembus dinding sel kulit bawang kering lalu menarik kuersetin keluar menuju cairan (dari bagian pekat ke encer). Karena perpindahan alami ini berjalan perlahan, diperlukan perendaman (maserasi) berjam-jam.
+                        </p>
+                    </div>
+
+                    <div class="bg-amber-950/30 p-2.5 rounded-xl border border-amber-500/40">
+                        <div class="text-xs font-bold text-amber-300">⚠️ Batas Jujur Ilmiah</div>
+                        <p class="text-[11px] text-slate-200 mt-1 leading-relaxed">
+                            Penyaringan menggunakan kertas saring memisahkan ampas padat secara fisik sehingga didapat cairan ekstrak merah jernih (filtrat). Tanpa alat ukur laboratorium canggih (seperti <b>kromatografi cair/HPLC</b> atau <b>spektrofotometer</b>), angka pasti kadar kuersetin tidak diklaim — yang dipastikan adalah <b>proses perendamannya benar secara prinsip</b>.
+                        </p>
+                    </div>
+                </div>
+
+                <button id="btn-to-s2" disabled onclick="goToStage(3)" class="w-full shrink-0 py-2.5 rounded-xl bg-amber-600 disabled:bg-slate-800 disabled:text-slate-500 hover:bg-amber-500 text-white font-bold text-xs shadow-lg transition">
+                    Lanjut ke Tahap 3: Formulasi Solvent Casting →
+                </button>
+            </div>
+        </section>
+
+        <!-- =========================================================
+             STAGE 3: FORMULASI EDIBLE FILM & OVEN TERPISAH
+             ========================================================= -->
+        <section id="stage-3" class="hidden h-full min-h-0 grid grid-cols-12 gap-3.5">
+            <!-- Panel Kiri (7 Kolom): Meja Adonan & Unit Oven Terpisah -->
+            <div class="col-span-7 min-h-0 bg-slate-900/90 rounded-2xl border border-slate-800 p-3.5 flex flex-col justify-between overflow-hidden">
+                <div class="flex items-center justify-between shrink-0">
+                    <div>
+                        <h2 class="text-sm font-bold text-white">Formulasi Lembaran Edible Film & Oven Terpisah</h2>
+                        <p class="text-[11px] text-slate-400">Campur adonan di kiri, lalu angkat cetakan masuk ke unit oven di kanan</p>
+                    </div>
+                    <button onclick="resetStage3()" class="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">
+                        ↻ Ulangi Tahap
+                    </button>
+                </div>
+
+                <!-- Area Kerja: Meja Pencampuran (Kiri) + Oven Terpisah (Kanan) -->
+                <div class="my-2 flex-1 min-h-0 grid grid-cols-12 gap-2.5">
+                    <!-- Meja Adonan & Cawan Cetakan -->
+                    <div id="s2-mix-zone" data-drop="stage2mix" class="drop-target col-span-6 bg-slate-950/80 rounded-2xl border-2 border-dashed border-slate-700 p-2.5 flex flex-col items-center justify-between">
+                        <div class="text-[10px] font-bold text-slate-400">Meja Adonan & Cetakan (Casting)</div>
+
+                        <!-- Cawan Cetakan yang Bisa Diangkat ke Oven -->
+                        <div id="mold-tray-item" draggable="true" data-action="into-oven" onclick="castAndDryFilm()" class="draggable-item flex flex-col items-center p-2 rounded-xl border border-slate-800 bg-slate-900/70 hover:border-amber-400">
+                            <svg viewBox="0 0 150 95" class="w-36 h-24">
+                                <!-- Bayangan Cawan -->
+                                <ellipse cx="75" cy="80" rx="58" ry="10" fill="rgba(0,0,0,0.6)" />
+                                <!-- Basis Pati + Gliserin -->
+                                <ellipse id="mold-starch-layer" cx="75" cy="70" rx="52" ry="12" fill="#f8fafc" opacity="0" class="transition-opacity duration-500" />
+                                <!-- Ekstrak Kuersetin Hangat Kuku -->
+                                <ellipse id="mold-extract-layer" cx="75" cy="70" rx="50" ry="11" fill="#d97706" opacity="0" class="transition-opacity duration-500" />
+                                <!-- Dinding Cawan Petri Datar -->
+                                <path d="M20 55 L20 70 Q20 84 75 84 Q130 84 130 70 L130 55" fill="none" stroke="#94a3b8" stroke-width="2.5" />
+                                <ellipse cx="75" cy="55" rx="55" ry="13" fill="none" stroke="#cbd5e1" stroke-width="2" />
+                            </svg>
+                            <span id="mold-status-label" class="text-[10px] font-semibold text-slate-400 mt-1">Cawan Kosong</span>
+                        </div>
+
+                        <!-- Slider Rasio Gliserin (Plasticizer) -->
+                        <div class="w-full bg-slate-900 p-2 rounded-xl border border-slate-800">
+                            <div class="flex justify-between text-[10px] mb-1">
+                                <span class="text-slate-300">Takaran Gliserin (Pelentur):</span>
+                                <span id="glycerin-label" class="font-bold text-emerald-400">Optimal (Lentur)</span>
+                            </div>
+                            <input id="glycerin-slider" type="range" min="1" max="3" value="2" oninput="updateGlycerinEffect(this.value)" class="w-full accent-emerald-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+                            <div class="flex justify-between text-[9px] text-slate-500 mt-0.5">
+                                <span>Kurang (Getas/Pecah)</span>
+                                <span>Pas</span>
+                                <span>Berlebih (Lembek)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Unit Oven Pengering Terpisah -->
+                    <div id="s2-oven-zone" data-drop="stage2oven" onclick="castAndDryFilm()" class="drop-target col-span-6 bg-slate-950/80 rounded-2xl border-2 border-dashed border-slate-700 p-2.5 flex flex-col items-center justify-between cursor-pointer hover:border-orange-500/60">
+                        <div class="flex items-center justify-between w-full">
+                            <span class="text-[10px] font-bold text-orange-300">Unit Oven Pengering (Terpisah)</span>
+                            <span id="oven-temp-badge" class="text-[9px] px-2 py-0.5 rounded bg-slate-800 text-slate-400">Standby</span>
+                        </div>
+
+                        <svg viewBox="0 0 170 125" class="w-40 h-28">
+                            <!-- Bodi Oven -->
+                            <rect x="15" y="12" width="140" height="100" rx="10" fill="#1e293b" stroke="#64748b" stroke-width="2.5" />
+                            <!-- Panel Kontrol Atas Oven -->
+                            <rect x="24" y="18" width="122" height="14" rx="4" fill="#0f172a" />
+                            <circle cx="126" cy="25" r="3" fill="#22c55e" />
+                            <circle cx="138" cy="25" r="3" id="oven-heat-led" fill="#475569" />
+                            <!-- Kaca Pintu Oven -->
+                            <rect id="oven-chamber-bg" x="24" y="36" width="122" height="66" rx="6" fill="#020617" stroke="#475569" stroke-width="1.5" />
+                            <!-- Rak Kawat Oven -->
+                            <line x1="28" y1="82" x2="142" y2="82" stroke="#64748b" stroke-width="2" />
+
+                            <!-- Cetakan & Lembaran Film di Dalam Oven -->
+                            <g id="oven-film-inside" opacity="0" class="transition-opacity duration-500">
+                                <ellipse cx="85" cy="78" rx="42" ry="7" fill="#d97706" stroke="#fbbf24" stroke-width="1.5" />
+                                <!-- Uap Air Menguap -->
+                                <path d="M68 66 Q64 56 68 48" fill="none" stroke="#bae6fd" stroke-width="1.5" class="steam-anim" />
+                                <path d="M85 64 Q81 54 85 46" fill="none" stroke="#bae6fd" stroke-width="1.5" class="steam-anim" style="animation-delay:0.4s" />
+                                <path d="M102 66 Q98 56 102 48" fill="none" stroke="#bae6fd" stroke-width="1.5" class="steam-anim" style="animation-delay:0.8s" />
+                            </g>
+                            <text id="oven-center-hint" x="85" y="64" text-anchor="middle" fill="#64748b" font-size="8">Seret / Klik Cetakan Masuk Sini</text>
+                        </svg>
+
+                        <div id="film-result-banner" class="w-full text-center text-[10px] py-1.5 px-2 rounded-lg bg-slate-900 text-slate-400 border border-slate-800">
+                            Menunggu adonan dimasukkan ke oven
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol / Bahan Aksi Tahap 3 -->
+                <div class="grid grid-cols-3 gap-2 shrink-0">
+                    <div draggable="true" data-action="starch" onclick="addStarchBase()" class="draggable-item bg-slate-950 border-2 border-slate-700 hover:border-sky-500 rounded-xl p-2 flex flex-col items-center text-center">
+                        <span class="text-lg pointer-events-none">🥣</span>
+                        <span class="text-[10px] font-bold text-white mt-0.5">1. Gel Pati + Gliserin</span>
+                        <span id="badge-s2-1" class="text-[9px] text-sky-400">Gelatinisasi & Pelentur</span>
+                    </div>
+
+                    <div draggable="true" data-action="extract-film" onclick="addExtractToFilm()" class="draggable-item bg-slate-950 border-2 border-slate-700 hover:border-amber-500 rounded-xl p-2 flex flex-col items-center text-center">
+                        <span class="text-lg pointer-events-none">💧</span>
+                        <span class="text-[10px] font-bold text-white mt-0.5">2. Ekstrak (Hangat Kuku)</span>
+                        <span id="badge-s2-2" class="text-[9px] text-amber-400">Cegah Rusak Panas</span>
+                    </div>
+
+                    <div onclick="castAndDryFilm()" class="cursor-pointer bg-slate-950 border-2 border-slate-700 hover:border-orange-500 rounded-xl p-2 flex flex-col items-center text-center">
+                        <span class="text-lg">🔥</span>
+                        <span class="text-[10px] font-bold text-white mt-0.5">3. Angkat ke Oven</span>
+                        <span id="badge-s2-3" class="text-[9px] text-orange-400">Pengeringan Film</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Kanan (5 Kolom): Mekanisme Formulasi & Pelepasan -->
+            <div class="col-span-5 min-h-0 bg-slate-900/90 rounded-2xl border border-slate-800 p-3.5 flex flex-col overflow-hidden">
+                <h3 class="text-sm font-bold text-white border-b border-slate-800 pb-2 shrink-0">Mekanisme Formulasi Solvent Casting</h3>
+                <div class="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1 my-2">
+                    <div class="bg-slate-950/80 p-2 rounded-xl border border-slate-800">
+                        <div class="text-xs font-bold text-amber-300">1. Gelatinisasi Pati & Fungsi Pelentur Gliserin</div>
+                        <p class="text-[11px] text-slate-300 mt-0.5 leading-relaxed">
+                            Pati (maizena) dipanaskan dalam air hingga butirannya mengembang membentuk jaringan pengikat (gelatinisasi). <b>Gliserin</b> ditambahkan sebagai bahan pelentur (<i>plasticizer</i>) agar lembaran tidak getas atau pecah seperti keripik saat kering.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950/80 p-2 rounded-xl border border-slate-800">
+                        <div class="text-xs font-bold text-rose-300">2. Pencampuran Ekstrak Saat Suhu Hangat Kuku</div>
+                        <p class="text-[11px] text-slate-300 mt-0.5 leading-relaxed">
+                            Ekstrak kuersetin dituang setelah suhu adonan turun menjadi <b>hangat kuku (bukan mendidih)</b> karena senyawa aktif nabati mudah rusak bila terkena panas tinggi berlebih.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950/80 p-2 rounded-xl border border-slate-800">
+                        <div class="text-xs font-bold text-sky-300">3. Pengeringan Oven & Pelepasan di Mulut</div>
+                        <p class="text-[11px] text-slate-300 mt-0.5 leading-relaxed">
+                            Air menguap membentuk jaringan padat yang menjebak kuersetin secara merata. Saat dimakan, air liur melarutkan lapisan pati yang suka air (hidrofilik) sehingga kuersetin terlepas menuju saluran cerna.
+                        </p>
+                    </div>
+                </div>
+
+                <button id="btn-to-s3" disabled onclick="goToStage(4)" class="w-full shrink-0 py-2.5 rounded-xl bg-purple-600 disabled:bg-slate-800 disabled:text-slate-500 hover:bg-purple-500 text-white font-bold text-xs shadow-lg transition">
+                    Lanjut ke Tahap 4: Verifikasi Uji Warna DPPH →
+                </button>
+            </div>
+        </section>
+
+        <!-- =========================================================
+             STAGE 4: VERIFIKASI KUALITATIF UJI DPPH + PEMINDAI HP
+             ========================================================= -->
+        <section id="stage-4" class="hidden h-full min-h-0 grid grid-cols-12 gap-3.5">
+            <!-- Panel Kiri (7 Kolom): Kotak Lampu 4 Wadah Reaksi & Pemindai Kamera HP -->
+            <div class="col-span-7 min-h-0 bg-slate-900/90 rounded-2xl border border-slate-800 p-3.5 flex flex-col justify-between overflow-hidden">
+                <div class="flex items-center justify-between shrink-0">
+                    <div>
+                        <h2 class="text-sm font-bold text-white">Verifikasi Kualitatif Uji Warna DPPH & Kamera HP</h2>
+                        <p class="text-[11px] text-slate-400">Tetesi larutan uji lalu klik atau geser pemindai HP ke tiap wadah reaksi</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="runDpphVerification()" class="text-[10px] px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold shadow">
+                            💧 Tetesi Cairan DPPH
+                        </button>
+                        <button onclick="resetStage4()" class="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">
+                            ↻ Ulangi Tahap
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Kotak Lampu (Light Box) & Pemindai HP -->
+                <div class="my-2 flex-1 min-h-0 bg-slate-950/80 rounded-2xl border border-slate-800 p-3 grid grid-cols-12 gap-3 items-center">
+                    <!-- 4 Wadah Reaksi di Atas Kotak Lampu -->
+                    <div class="col-span-7 h-full flex flex-col justify-between bg-slate-900 p-3 rounded-xl border border-slate-800">
+                        <div class="text-[10px] font-bold text-slate-400 text-center">Kotak Lampu Pencahayaan Seragam (4 Wadah Reaksi)</div>
+                        <div class="grid grid-cols-2 gap-2.5 my-auto">
+                            <button id="well-card-0" onclick="scanWithPhoneCam(0)" ondragover="event.preventDefault()" ondrop="scanWithPhoneCam(0)" class="p-2.5 rounded-xl bg-slate-950 border-2 border-slate-800 hover:border-purple-400 flex flex-col items-center transition relative">
+                                <div id="well-0" class="w-11 h-11 rounded-full bg-purple-900/50 border-2 border-purple-500/50 transition-colors duration-700 shadow-inner"></div>
+                                <span class="text-[10px] font-bold text-white mt-1.5">Wadah A: Kontrol</span>
+                                <span class="text-[9px] text-slate-400">Tanpa Ekstrak</span>
+                            </button>
+
+                            <button id="well-card-1" onclick="scanWithPhoneCam(1)" ondragover="event.preventDefault()" ondrop="scanWithPhoneCam(1)" class="p-2.5 rounded-xl bg-slate-950 border-2 border-slate-800 hover:border-amber-400 flex flex-col items-center transition relative">
+                                <div id="well-1" class="w-11 h-11 rounded-full bg-purple-900/50 border-2 border-purple-500/50 transition-colors duration-700 shadow-inner"></div>
+                                <span class="text-[10px] font-bold text-white mt-1.5">Wadah B: Film Tipis</span>
+                                <span class="text-[9px] text-slate-400">Dosis Rendah</span>
+                            </button>
+
+                            <button id="well-card-2" onclick="scanWithPhoneCam(2)" ondragover="event.preventDefault()" ondrop="scanWithPhoneCam(2)" class="p-2.5 rounded-xl bg-slate-950 border-2 border-slate-800 hover:border-amber-400 flex flex-col items-center transition relative">
+                                <div id="well-2" class="w-11 h-11 rounded-full bg-purple-900/50 border-2 border-purple-500/50 transition-colors duration-700 shadow-inner"></div>
+                                <span class="text-[10px] font-bold text-white mt-1.5">Wadah C: Film QUERSHIELD</span>
+                                <span class="text-[9px] text-slate-400">Formulasi Utama</span>
+                            </button>
+
+                            <button id="well-card-3" onclick="scanWithPhoneCam(3)" ondragover="event.preventDefault()" ondrop="scanWithPhoneCam(3)" class="p-2.5 rounded-xl bg-slate-950 border-2 border-slate-800 hover:border-emerald-400 flex flex-col items-center transition relative">
+                                <div id="well-3" class="w-11 h-11 rounded-full bg-purple-900/50 border-2 border-purple-500/50 transition-colors duration-700 shadow-inner"></div>
+                                <span class="text-[10px] font-bold text-white mt-1.5">Wadah D: Pembanding</span>
+                                <span class="text-[9px] text-slate-400">Vitamin C Murni</span>
+                            </button>
+                        </div>
+                        <div class="text-[9px] text-center text-slate-400">Klik wadah reaksi atau seret modul kamera HP ke wadah untuk memindai</div>
+                    </div>
+
+                    <!-- Layar Kamera Ponsel (Bisa Ditarik & Menampilkan Laser Scan) -->
+                    <div id="phone-scanner-device" draggable="true" class="col-span-5 h-full bg-slate-900 rounded-2xl border-2 border-slate-700 hover:border-emerald-400/70 p-2.5 flex flex-col justify-between cursor-grab active:cursor-grabbing">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                            <span class="text-[10px] font-bold text-emerald-400">📱 Kamera Pemindai HP</span>
+                            <span id="cam-well-tag" class="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">Siap Pindai</span>
+                        </div>
+
+                        <div class="my-auto text-center space-y-2">
+                            <!-- Jendela Bidik Kamera + Garis Laser Pemindai -->
+                            <div class="relative w-20 h-20 mx-auto rounded-2xl bg-slate-950 border-2 border-slate-700 flex items-center justify-center overflow-hidden">
+                                <!-- Sudut Bidik Kamera -->
+                                <div class="absolute top-1.5 left-1.5 w-2.5 h-2.5 border-t-2 border-l-2 border-emerald-400"></div>
+                                <div class="absolute top-1.5 right-1.5 w-2.5 h-2.5 border-t-2 border-r-2 border-emerald-400"></div>
+                                <div class="absolute bottom-1.5 left-1.5 w-2.5 h-2.5 border-b-2 border-l-2 border-emerald-400"></div>
+                                <div class="absolute bottom-1.5 right-1.5 w-2.5 h-2.5 border-b-2 border-r-2 border-emerald-400"></div>
+
+                                <div id="cam-color-preview" class="w-12 h-12 rounded-full bg-slate-800 border-2 border-slate-600 flex items-center justify-center text-[10px] font-bold text-slate-400 transition-colors duration-300">
+                                    RGB
+                                </div>
+
+                                <!-- Garis Laser Pemindai Hijau -->
+                                <div id="scanner-laser" class="hidden absolute left-1 right-1 h-0.5 bg-emerald-400 shadow-[0_0_8px_#34d399] laser-scan-active"></div>
+                            </div>
+
+                            <div id="cam-sample-name" class="text-xs font-bold text-white">Pilih Wadah Reaksi</div>
+                            <div id="cam-rgb-text" class="text-[10px] text-slate-400 font-mono">R: - | G: - | B: -</div>
+                            <div class="bg-slate-950 p-2 rounded-xl border border-slate-800">
+                                <div class="text-[9px] text-slate-400">Perubahan Warna Ungu → Kuning</div>
+                                <div id="cam-shift-result" class="text-xs font-extrabold text-amber-300 mt-0.5">Menunggu Tetesan</div>
+                            </div>
+                        </div>
+
+                        <div class="text-[9px] text-slate-400 text-center">
+                            Membantu dokumentasi perubahan warna secara konsisten tanpa alat mahal
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Kanan (5 Kolom): Kejujuran Fungsi Uji DPPH -->
+            <div class="col-span-5 min-h-0 bg-slate-900/90 rounded-2xl border border-slate-800 p-3.5 flex flex-col overflow-hidden">
+                <h3 class="text-sm font-bold text-white border-b border-slate-800 pb-2 shrink-0">Fungsi Sebenarnya Uji Warna DPPH</h3>
+                <div class="flex-1 min-h-0 overflow-y-auto space-y-2.5 pr-1 my-2">
+                    <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">
+                        <div class="text-xs font-bold text-purple-300">1. Apa Itu Cairan Uji DPPH?</div>
+                        <p class="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                            <b>DPPH</b> adalah cairan penguji yang berwarna <b>ungu pekat</b> karena mengandung radikal bebas stabil di dalamnya.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">
+                        <div class="text-xs font-bold text-amber-300">2. Arti Perubahan Warna Ungu ke Kuning Pucat</div>
+                        <p class="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                            Ketika lembaran film QUERSHIELD dilarutkan dan ditetesi cairan uji ini, senyawa kuersetin menyumbangkan elektron untuk menetralkan radikal bebas tersebut sehingga warnanya memudar menjadi <b>kuning pucat</b>.
+                        </p>
+                    </div>
+
+                    <div class="bg-amber-950/30 p-2.5 rounded-xl border border-amber-500/40">
+                        <div class="text-xs font-bold text-amber-300">⚠️ Kejujuran Fungsi Tahap Ini</div>
+                        <p class="text-[11px] text-slate-200 mt-1 leading-relaxed">
+                            Tahap ini <b>bukan menguji khasiat pada tubuh manusia</b>, melainkan membuktikan secara sederhana bahwa zat penangkal radikal bebas di dalam film masih aktif dan tidak rusak setelah melewati perendaman, pemanasan, dan pencetakan.
+                        </p>
+                    </div>
+                </div>
+
+                <button onclick="goToStage(5)" class="w-full shrink-0 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition">
+                    Lanjut ke Tahap 5: Mekanisme Biologis & Hasil Akhir →
+                </button>
+            </div>
+        </section>
+
+        <!-- =========================================================
+             STAGE 5: MEKANISME BIOLOGIS INTERAKTIF & GAMBARAN PRODUK AKHIR
+             ========================================================= -->
+        <section id="stage-5" class="hidden h-full min-h-0 grid grid-cols-12 gap-3.5">
+            <!-- Panel Kiri (7 Kolom): Simulasi Biologis Sel Paru-paru -->
+            <div class="col-span-7 min-h-0 bg-slate-900/90 rounded-2xl border border-slate-800 p-3.5 flex flex-col justify-between overflow-hidden">
+                <div class="flex items-center justify-between shrink-0">
+                    <div>
+                        <h2 class="text-sm font-bold text-white">Mekanisme Biologis Kuersetin Melawan Debu Polusi</h2>
+                        <p class="text-[11px] text-slate-400">Klik tiap tombol tahapan untuk melihat bagaimana kuersetin bekerja di sel paru</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="playFullShieldSequence()" class="text-[10px] px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold">
+                            ▶ Putar Semua Tahap
+                        </button>
+                        <button onclick="resetStage5()" class="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">
+                            ↻ Ulangi Tahap
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Visualisasi Sel Epitel Paru-Paru -->
+                <div class="my-2 flex-1 min-h-0 bg-slate-950/80 rounded-2xl border border-slate-800 p-3 flex flex-col justify-between">
+                    <svg viewBox="0 0 360 155" class="w-full h-36">
+                        <!-- Udara Luar & Partikel Debu Halus (PM2.5) -->
+                        <text x="180" y="14" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-weight="bold">Udara Saluran Napas Bawah (Partikel Debu Halus PM2.5)</text>
+                        <g id="sim5-smoke-particles">
+                            <circle cx="95" cy="28" r="4" fill="#f43f5e" class="smoke-drop" />
+                            <circle cx="155" cy="24" r="4.5" fill="#e11d48" class="smoke-drop" style="animation-delay:0.4s" />
+                            <circle cx="215" cy="28" r="4" fill="#f43f5e" class="smoke-drop" style="animation-delay:0.8s" />
+                            <circle cx="265" cy="24" r="3.8" fill="#fb7185" class="smoke-drop" style="animation-delay:1.1s" />
+                        </g>
+
+                        <!-- Perisai Antioksidan Kuersetin (Muncul pada Mode 2 & 3) -->
+                        <g id="sim5-shield-arc" opacity="0" class="transition-opacity duration-500">
+                            <path d="M45 84 Q180 54 315 84" fill="none" stroke="#fbbf24" stroke-width="5" stroke-linecap="round" />
+                            <text x="180" y="64" text-anchor="middle" fill="#fde047" font-size="8.5" font-weight="bold">🛡️ Antioksidan Kuersetin Menetralkan Radikal Bebas (ROS)</text>
+                        </g>
+
+                        <!-- Barisan Sel Epitel Paru-Paru -->
+                        <g id="sim5-cells-group">
+                            <rect id="cell-1" x="45" y="96" width="84" height="46" rx="10" fill="#7f1d1d" stroke="#f43f5e" stroke-width="2" class="transition-colors duration-500" />
+                            <circle cx="87" cy="119" r="10" fill="#450a0a" />
+                            <text x="87" y="122" text-anchor="middle" fill="#fecdd3" font-size="7.5" font-weight="bold">Sel Paru 1</text>
+
+                            <rect id="cell-2" x="138" y="96" width="84" height="46" rx="10" fill="#7f1d1d" stroke="#f43f5e" stroke-width="2" class="transition-colors duration-500" />
+                            <circle cx="180" cy="119" r="10" fill="#450a0a" />
+                            <text x="180" y="122" text-anchor="middle" fill="#fecdd3" font-size="7.5" font-weight="bold">Sel Paru 2</text>
+
+                            <rect id="cell-3" x="231" y="96" width="84" height="46" rx="10" fill="#7f1d1d" stroke="#f43f5e" stroke-width="2" class="transition-colors duration-500" />
+                            <circle cx="273" cy="119" r="10" fill="#450a0a" />
+                            <text x="273" y="122" text-anchor="middle" fill="#fecdd3" font-size="7.5" font-weight="bold">Sel Paru 3</text>
+                        </g>
+                    </svg>
+
+                    <!-- Penjelasan Status Simulasi Saat Ini -->
+                    <div id="sim5-caption-box" class="bg-rose-950/40 border border-rose-500/40 rounded-xl p-2.5 text-[11px] text-slate-200 leading-relaxed">
+                        <b class="text-rose-300">Tanpa Intervensi:</b> Debu halus memicu lonjakan <b>radikal bebas (ROS)</b> yang merusak lemak membran sel hingga memicu kematian sel akibat kelebihan zat besi (<b>ferroptosis</b>).
+                    </div>
+                </div>
+
+                <!-- 3 Tombol Kontrol Mekanisme Biologis -->
+                <div class="grid grid-cols-3 gap-2 shrink-0">
+                    <button id="btn-sim5-0" onclick="setShieldSim(0)" class="p-2 rounded-xl bg-rose-950/70 border-2 border-rose-500 text-left transition">
+                        <div class="text-[10px] font-bold text-rose-300">1. Tanpa Perisai</div>
+                        <div class="text-[9px] text-slate-300 mt-0.5">Radikal bebas merusak sel</div>
+                    </button>
+
+                    <button id="btn-sim5-1" onclick="setShieldSim(1)" class="p-2 rounded-xl bg-slate-950 border-2 border-slate-800 hover:border-amber-500 text-left transition">
+                        <div class="text-[10px] font-bold text-amber-300">2. Tangkap Radikal Bebas</div>
+                        <div class="text-[9px] text-slate-300 mt-0.5">Kuersetin menetralkan racun</div>
+                    </button>
+
+                    <button id="btn-sim5-2" onclick="setShieldSim(2)" class="p-2 rounded-xl bg-slate-950 border-2 border-slate-800 hover:border-emerald-500 text-left transition">
+                        <div class="text-[10px] font-bold text-emerald-300">3. Sakelar Pertahanan Sel</div>
+                        <div class="text-[9px] text-slate-300 mt-0.5">Aktifkan enzim pelindung</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Panel Kanan (5 Kolom): Gambaran Bentuk Hasil Akhir Produk & Bukti Presentasi -->
+            <div class="col-span-5 min-h-0 bg-slate-900/90 rounded-2xl border border-slate-800 p-3.5 flex flex-col overflow-hidden">
+                <h3 class="text-sm font-bold text-white border-b border-slate-800 pb-1.5 shrink-0">Gambaran Bentuk Hasil Akhir (Gagasan)</h3>
+                <div class="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1 my-2">
+                    <!-- Visual Sachet & Lembaran 4x4 cm -->
+                    <div class="bg-slate-950/90 p-2.5 rounded-xl border border-slate-800 flex items-center gap-3">
+                        <div class="w-16 h-16 shrink-0 rounded-xl bg-gradient-to-br from-amber-700/80 to-amber-900/90 border-2 border-amber-400/70 flex flex-col items-center justify-center text-center shadow">
+                            <span class="text-[9px] font-extrabold text-amber-200">4 × 4 cm</span>
+                            <span class="text-[8px] text-amber-100/80">Larut Cepat</span>
+                        </div>
+                        <div class="text-[10px] text-slate-300 leading-snug">
+                            <div class="font-bold text-amber-300">Wujud Fisik Produk Akhir (Konsep)</div>
+                            Lembaran tipis cokelat muda keemasan alami (mirip <i>wafer paper</i> / rumput laut), lentur karena gliserin, dan larut di mulut dalam hitungan detik.
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 text-[10px] text-slate-300 space-y-1">
+                        <div class="font-bold text-sky-300">Kemasan & Cara Penggunaan (Gagasan)</div>
+                        <p>• Dikemas per lembar dalam <b>sachet kedap udara</b> agar tidak lembap di tas sekolah.</p>
+                        <p>• Dikonsumsi <b>1 lembar ±15 menit sebelum berolahraga</b> saat kualitas udara tidak sehat.</p>
+                        <p>• Berfungsi sebagai <b>lapisan proteksi tambahan</b> (bukan pengganti masker atau alat pelindung diri).</p>
+                    </div>
+
+                    <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 text-[10px] text-slate-300 space-y-1">
+                        <div class="font-bold text-emerald-300">Catatan Kejujuran Ilmiah (Hipotesis)</div>
+                        <p>• Selain menangkap radikal bebas langsung, pustaka mencatat kuersetin dapat mengaktifkan <b>jalur sinyal Nrf2</b> (sakelar produksi antioksidan alami tubuh), meski beberapa studi (Ding dkk., 2024) mencatat hasilnya belum sepenuhnya seragam.</p>
+                        <p>• Dosis efektif pada tubuh manusia dan distribusi skala komunitas (UKS/kantin) masih menjadi <b>arah penelitian lanjutan</b>.</p>
+                    </div>
+
+                    <!-- Bukti Fisik di Presentasi -->
+                    <div class="bg-amber-950/35 p-2.5 rounded-xl border border-amber-500/40 text-[10px] text-slate-200">
+                        <b class="text-amber-300">Yang Ditunjukkan ke Juri Saat Presentasi:</b>
+                        Prototipe fisik dari Panduan Praktikum (ekstrak kasar + percobaan awal lembaran film) sebagai bukti bahwa <b>"memang bisa dibuat secara prinsip"</b> — dengan status jujur: <i>formulasi awal, belum dioptimasi untuk ukuran/rasa/kemasan akhir</i>.
+                    </div>
+                </div>
+
+                <button onclick="resetAllLab()" class="w-full shrink-0 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition">
+                    ↻ Ulangi Simulasi dari Awal
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- =========================================================
+         LOGIKA INTERAKTIF & ANIMASI JAVASCRIPT
+         ========================================================= -->
+    <script>
+        const labState = {
+            currentStage: 1,
+            ageGroup: 'child',
+            breathMode: 'sport',
+            s1Powder: false,
+            s1Ethanol: false,
+            s1StirPct: 0,
+            s1Filtered: false,
+            s2Starch: false,
+            s2Extract: false,
+            s2Baked: false,
+            dpphApplied: false,
+            isStirring: false,
+            isScanning: false,
+            isBaking: false
+        };
+
+        // Navigasi antar 5 tahap
+        function goToStage(stageNum) {
+            labState.currentStage = stageNum;
+            for (let i = 1; i <= 5; i++) {
+                const sec = document.getElementById('stage-' + i);
+                const nav = document.getElementById('nav-' + i);
+                if (i === stageNum) {
+                    sec.classList.remove('hidden');
+                    nav.className = 'px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-rose-600 text-white transition';
+                } else {
+                    sec.classList.add('hidden');
+                    nav.className = 'px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition';
+                }
+            }
+        }
+
+        // Notifikasi Toast
+        let toastTimer = null;
+        function showToast(title, msg) {
+            const box = document.getElementById('toast-box');
+            document.getElementById('toast-title').textContent = title;
+            document.getElementById('toast-msg').textContent = msg;
+            box.classList.remove('opacity-0');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => box.classList.add('opacity-0'), 2800);
+        }
+
+        // Kontrol Modal Notes Ilmiah
+        function openNotesModal() {
+            document.getElementById('notes-modal').classList.remove('hidden');
+        }
+        function closeNotesModal() {
+            document.getElementById('notes-modal').classList.add('hidden');
+        }
+
+        // =========================================================
+        // STAGE 1: SIMULASI PERNAPASAN ANAK VS DEWASA
+        // =========================================================
+        function setAgeGroup(group) {
+            labState.ageGroup = group;
+            updateBreathSimulation();
+        }
+
+        function setBreathMode(mode) {
+            labState.breathMode = mode;
+            updateBreathSimulation();
+        }
+
+        function updateBreathSimulation() {
+            const isChild = labState.ageGroup === 'child';
+            const isSport = labState.breathMode === 'sport';
+
+            // Update tombol subjek
+            document.getElementById('btn-group-child').className = isChild
+                ? 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-600 text-white transition'
+                : 'px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition';
+            document.getElementById('btn-group-adult').className = !isChild
+                ? 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-600 text-white transition'
+                : 'px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition';
+
+            // Update tombol aktivitas
+            document.getElementById('btn-mode-rest').className = !isSport
+                ? 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-sky-600 text-white transition'
+                : 'px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition';
+            document.getElementById('btn-mode-sport').className = isSport
+                ? 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-600 text-white transition'
+                : 'px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition';
+
+            const lungs = document.getElementById('lungs-graphic');
+            const noseParticles = document.getElementById('particles-nose-group');
+            const mouthParticles = document.getElementById('particles-mouth-group');
+            const titleEl = document.getElementById('sim-subject-title');
+            const rateEl = document.getElementById('sim-breath-rate');
+            const filterEl = document.getElementById('sim-filter-status');
+            const doseLbl = document.getElementById('sim-dose-label');
+            const doseBar = document.getElementById('sim-dose-bar');
+            const noteEl = document.getElementById('sim-physiological-note');
+
+            if (isSport) {
+                noseParticles.classList.add('hidden');
+                mouthParticles.classList.remove('hidden');
+                filterEl.textContent = 'Terlewati';
+                filterEl.className = 'text-xs font-extrabold text-rose-400';
+            } else {
+                noseParticles.classList.remove('hidden');
+                mouthParticles.classList.add('hidden');
+                filterEl.textContent = 'Tersaring Sebagian';
+                filterEl.className = 'text-xs font-extrabold text-sky-400';
+            }
+
+            if (isChild && isSport) {
+                lungs.setAttribute('class', 'lung-child-sport');
+                titleEl.textContent = 'Anak/Remaja • Olahraga';
+                rateEl.textContent = '~55× / menit';
+                doseLbl.textContent = 'Sangat Tinggi (95%)';
+                doseBar.style.width = '95%';
+                noteEl.textContent = 'Paru-paru anak masih berkembang dan menghirup udara jauh lebih banyak per kg berat badan. Saat olahraga, napas lewat mulut membuat debu halus masuk langsung ke paru bagian bawah.';
+            } else if (isChild && !isSport) {
+                lungs.setAttribute('class', 'lung-sport');
+                titleEl.textContent = 'Anak/Remaja • Istirahat';
+                rateEl.textContent = '~26× / menit';
+                doseLbl.textContent = 'Sedang-Tinggi (55%)';
+                doseBar.style.width = '55%';
+                noteEl.textContent = 'Meski sedang duduk istirahat, laju napas anak per kg berat badan tetap lebih tinggi dibanding dewasa, namun bulu hidung masih membantu menyaring sebagian debu besar.';
+            } else if (!isChild && isSport) {
+                lungs.setAttribute('class', 'lung-sport');
+                titleEl.textContent = 'Orang Dewasa • Olahraga';
+                rateEl.textContent = '~32× / menit';
+                doseLbl.textContent = 'Tinggi (62%)';
+                doseBar.style.width = '62%';
+                noteEl.textContent = 'Orang dewasa tetap terpapar debu halus saat bernapas lewat mulut ketika berolahraga, namun struktur paru-paru dan sistem pembersih lendirnya sudah matang.';
+            } else {
+                lungs.setAttribute('class', 'lung-rest');
+                titleEl.textContent = 'Orang Dewasa • Istirahat';
+                rateEl.textContent = '~15× / menit';
+                doseLbl.textContent = 'Rendah (25%)';
+                doseBar.style.width = '25%';
+                noteEl.textContent = 'Saat dewasa istirahat, napas tenang melewati rongga hidung sehingga bulu hidung menyaring sebagian besar debu sebelum mencapai paru-paru.';
+            }
+        }
+
+        // =========================================================
+        // STAGE 2: EKSTRAKSI MASERASI & PENYARINGAN
+        // =========================================================
+        function addOnionPowder() {
+            labState.s1Powder = true;
+            document.getElementById('beaker-powder-group').setAttribute('opacity', '1');
+            document.getElementById('badge-s1-1').textContent = '✓ Masuk Gelas';
+            document.getElementById('badge-s1-1').className = 'text-[9px] text-emerald-400 font-bold';
+            document.getElementById('s1-status').textContent = 'Serbuk Siap Direndam';
+            showToast('Bahan Ditambahkan', 'Serbuk kulit bawang merah masuk ke gelas kimia.');
+        }
+
+        function addEthanol() {
+            if (!labState.s1Powder) {
+                showToast('Urutan Kurang Tepat', 'Masukkan serbuk kulit bawang merah terlebih dahulu.');
+                return;
+            }
+            labState.s1Ethanol = true;
+            document.getElementById('beaker-liquid-group').setAttribute('opacity', '1');
+            document.getElementById('badge-s1-2').textContent = '✓ Etanol 70% Masuk';
+            document.getElementById('badge-s1-2').className = 'text-[9px] text-emerald-400 font-bold';
+            document.getElementById('s1-status').textContent = 'Siap Diaduk & Direndam';
+            showToast('Pelarut Semi-Polar Masuk', 'Etanol 70% mulai merendam serbuk kulit bawang merah.');
+        }
+
+        function stirStepClick() {
+            if (!labState.s1Ethanol) {
+                showToast('Belum Ada Cairan', 'Tambahkan serbuk kulit bawang dan etanol 70% dulu sebelum mengaduk.');
+                return;
+            }
+            if (labState.isStirring) return;
+            labState.isStirring = true;
+            
+            // Pengadukan bertahap yang lebih lambat dan realistis (10% per klik)
+            const targetPct = Math.min(100, labState.s1StirPct + 20);
+            document.getElementById('glass-rod-in-beaker').setAttribute('opacity', '1');
+
+            let current = labState.s1StirPct;
+            const interval = setInterval(() => {
+                current += 2;
+                if (current >= targetPct || current >= 100) {
+                    current = targetPct;
+                    clearInterval(interval);
+                    labState.isStirring = false;
+                }
+                labState.s1StirPct = current;
+                
+                document.getElementById('stir-progress-bar').style.width = current + '%';
+                document.getElementById('stir-progress-text').textContent = current + '% (Kuersetin berdifusi)';
+
+                const liq = document.getElementById('beaker-liquid-fill');
+                if (current >= 75) {
+                    liq.setAttribute('fill', '#9f1239');
+                    liq.setAttribute('opacity', '0.85');
+                    document.getElementById('badge-s1-3').textContent = '✓ Ekstrak Pekat';
+                    document.getElementById('badge-s1-3').className = 'text-[9px] text-emerald-400 font-bold';
+                    document.getElementById('s1-status').textContent = 'Siap Disaring';
+                } else if (current >= 30) {
+                    liq.setAttribute('fill', '#e11d48');
+                    liq.setAttribute('opacity', '0.6');
+                }
+            }, 60);
+        }
+
+        function filterExtract() {
+            if (!labState.s1Ethanol || labState.s1StirPct < 50) {
+                showToast('Aduk Lebih Lama', 'Pastikan proses perendaman (difusi) mencapai minimal 50% sebelum disaring.');
+                return;
+            }
+            labState.s1Filtered = true;
+            document.getElementById('filter-pour-arrow').setAttribute('opacity', '1');
+            document.getElementById('filter-residue-group').setAttribute('opacity', '1');
+            document.getElementById('filter-drip-group').setAttribute('opacity', '1');
+            document.getElementById('filtrate-collected-liquid').setAttribute('opacity', '0.9');
+            document.getElementById('beaker-liquid-group').setAttribute('opacity', '0.25');
+            document.getElementById('beaker-powder-group').setAttribute('opacity', '0.3');
+
+            const cupLbl = document.getElementById('filtrate-cup-label');
+            cupLbl.textContent = 'Filtrat Jernih';
+            cupLbl.setAttribute('fill', '#fde68a');
+
+            document.getElementById('filtrate-status-text').textContent = '✓ Filtrat Jernih Tertampung';
+            document.getElementById('filtrate-status-text').className = 'font-bold text-emerald-400 mt-0.5';
+            document.getElementById('badge-s1-4').textContent = '✓ Tersaring';
+            document.getElementById('badge-s1-4').className = 'text-[9px] text-emerald-400 font-bold';
+            document.getElementById('s1-status').textContent = 'Ekstrak Siap Diformulasi';
+            document.getElementById('btn-to-s2').disabled = false;
+            showToast('Penyaringan Berhasil', 'Ampas tertahan di kertas saring, cairan ekstrak merah jernih (filtrat) tertampung!');
+        }
+
+        // =========================================================
+        // STAGE 3: FORMULASI FILM & OVEN TERPISAH
+        // =========================================================
+        function addStarchBase() {
+            labState.s2Starch = true;
+            document.getElementById('mold-starch-layer').setAttribute('opacity', '0.85');
+            document.getElementById('mold-status-label').textContent = 'Basis Gel Pati + Gliserin';
+            document.getElementById('badge-s2-1').textContent = '✓ Gel Siap';
+            document.getElementById('badge-s2-1').className = 'text-[9px] text-emerald-400 font-bold';
+            showToast('Gel Pati & Gliserin', 'Adonan basis film terbentuk dan siap dicampur ekstrak hangat kuku.');
+        }
+
+        function addExtractToFilm() {
+            if (!labState.s2Starch) {
+                showToast('Siapkan Basis Dulu', 'Tuang gel pati + gliserin terlebih dahulu.');
+                return;
+            }
+            labState.s2Extract = true;
+            document.getElementById('mold-extract-layer').setAttribute('opacity', '0.9');
+            document.getElementById('mold-status-label').textContent = 'Siap Diangkat ke Oven →';
+            document.getElementById('mold-status-label').className = 'text-[10px] font-bold text-amber-300 mt-1';
+            document.getElementById('badge-s2-2').textContent = '✓ Tercampur';
+            document.getElementById('badge-s2-2').className = 'text-[9px] text-emerald-400 font-bold';
+            showToast('Ekstrak Tercampur Aman', 'Dicampur saat hangat kuku agar kuersetin tidak rusak karena panas berlebih.');
+        }
+
+        function updateGlycerinEffect(val) {
+            const lbl = document.getElementById('glycerin-label');
+            if (val === '1') {
+                lbl.textContent = 'Kurang (Mudah Retak/Getas)';
+                lbl.className = 'font-bold text-rose-400';
+            } else if (val === '2') {
+                lbl.textContent = 'Optimal (Lentur)';
+                lbl.className = 'font-bold text-emerald-400';
+            } else {
+                lbl.textContent = 'Berlebih (Terlalu Lembek)';
+                lbl.className = 'font-bold text-amber-400';
+            }
+        }
+
+        function castAndDryFilm() {
+            if (!labState.s2Extract) {
+                showToast('Adonan Belum Lengkap', 'Campurkan gel pati dan ekstrak kuersetin dulu sebelum masuk oven.');
+                return;
+            }
+            if (labState.isBaking) return;
+            labState.isBaking = true;
+
+            document.getElementById('oven-temp-badge').textContent = 'Memanaskan 50°C';
+            document.getElementById('oven-temp-badge').className = 'text-[9px] px-2 py-0.5 rounded bg-orange-600 text-white font-bold';
+            document.getElementById('oven-heat-led').setAttribute('fill', '#f97316');
+            document.getElementById('oven-chamber-bg').setAttribute('fill', '#431407');
+            document.getElementById('oven-film-inside').setAttribute('opacity', '1');
+            document.getElementById('oven-center-hint').textContent = 'Pengeringan bertahap di oven...';
+            document.getElementById('oven-center-hint').setAttribute('fill', '#fde68a');
+
+            const banner = document.getElementById('film-result-banner');
+            banner.textContent = '⏳ Mengeringkan air & membentuk jaringan matriks pati...';
+            banner.className = 'w-full text-center text-[10px] py-1.5 px-2 rounded-lg bg-amber-950/70 text-amber-300 border border-amber-500/40 font-bold';
+
+            // Proses oven yang lebih lambat dan realistis (1.5 detik)
+            setTimeout(() => {
+                labState.s2Baked = true;
+                labState.isBaking = false;
+                document.getElementById('oven-temp-badge').textContent = 'Selesai 50°C';
+                document.getElementById('oven-center-hint').textContent = 'Lembaran Film Siap!';
+                
+                banner.textContent = '✓ Lembaran Edible Film Cokelat Keemasan Jadi!';
+                banner.className = 'w-full text-center text-[10px] py-1.5 px-2 rounded-lg bg-emerald-950/70 text-emerald-300 border border-emerald-500/40 font-bold';
+
+                document.getElementById('badge-s2-3').textContent = '✓ Kering Sempurna';
+                document.getElementById('badge-s2-3').className = 'text-[9px] text-emerald-400 font-bold';
+                document.getElementById('btn-to-s3').disabled = false;
+                showToast('Edible Film Jadi!', 'Air menguap dan jaringan pati mengikat kuersetin secara merata.');
+            }, 1600);
+        }
+
+        // =========================================================
+        // STAGE 4: VERIFIKASI UJI WARNA DPPH & KAMERA PONSEL
+        // =========================================================
+        const wellSamples = [
+            { name: 'Wadah A: Kontrol Negatif', rgb: 'R: 112 | G: 38 | B: 158', bg: '#6b21a8', result: 'Tetap Ungu (Radikal Aktif)' },
+            { name: 'Wadah B: Film Dosis Rendah', rgb: 'R: 185 | G: 132 | B: 96', bg: '#b45309', result: 'Memudar Sebagian' },
+            { name: 'Wadah C: Film QUERSHIELD', rgb: 'R: 234 | G: 198 | B: 74', bg: '#eab308', result: 'Kuning Pucat (Antioksidan Aktif)' },
+            { name: 'Wadah D: Kontrol Vitamin C', rgb: 'R: 245 | G: 215 | B: 85', bg: '#facc15', result: 'Kuning Cerah (Pembanding)' }
+        ];
+
+        function runDpphVerification() {
+            labState.dpphApplied = true;
+            wellSamples.forEach((item, idx) => {
+                const el = document.getElementById('well-' + idx);
+                if (el) el.style.backgroundColor = item.bg;
+            });
+            scanWithPhoneCam(2);
+            showToast('Cairan DPPH Diteteskan', 'Terlihat perubahan warna ungu menuju kuning pada wadah berisi film QUERSHIELD.');
+        }
+
+        function scanWithPhoneCam(idx) {
+            if (!labState.dpphApplied) {
+                showToast('Tetesi DPPH Dulu', 'Klik tombol "Tetesi Cairan DPPH" di atas kotak lampu terlebih dahulu.');
+                return;
+            }
+            if (labState.isScanning) return;
+            labState.isScanning = true;
+
+            // Sorot bingkai wadah yang sedang dipindai
+            for (let i = 0; i < 4; i++) {
+                const card = document.getElementById('well-card-' + i);
+                if (card) {
+                    card.className = i === idx
+                        ? 'p-2.5 rounded-xl bg-slate-900 border-2 border-emerald-400 flex flex-col items-center transition relative shadow-lg'
+                        : 'p-2.5 rounded-xl bg-slate-950 border-2 border-slate-800 hover:border-slate-600 flex flex-col items-center transition relative';
+                }
+            }
+
+            const laser = document.getElementById('scanner-laser');
+            const prev = document.getElementById('cam-color-preview');
+            if (laser) laser.classList.remove('hidden');
+
+            document.getElementById('cam-well-tag').textContent = 'Memindai...';
+            prev.style.backgroundColor = wellSamples[idx].bg;
+            prev.textContent = '';
+            document.getElementById('cam-sample-name').textContent = 'Membaca Sensor RGB...';
+            document.getElementById('cam-rgb-text').textContent = 'R: ... | G: ... | B: ...';
+            document.getElementById('cam-shift-result').textContent = 'Laser memindai wadah reaksi...';
+
+            // Simulasi pemindaian kamera HP yang mulus & terukur (1.1 detik)
+            setTimeout(() => {
+                labState.isScanning = false;
+                if (laser) laser.classList.add('hidden');
+                const item = wellSamples[idx];
+                document.getElementById('cam-well-tag').textContent = 'Wadah ' + ['A', 'B', 'C', 'D'][idx];
+                prev.style.backgroundColor = item.bg;
+                prev.textContent = '';
+                document.getElementById('cam-sample-name').textContent = item.name;
+                document.getElementById('cam-rgb-text').textContent = item.rgb;
+                document.getElementById('cam-shift-result').textContent = item.result;
+            }, 1100);
+        }
+
+        function scanWithPhoneCam(idx) {
+            if (!labState.dpphApplied) {
+                showToast('Tetesi DPPH Dulu', 'Klik tombol "Tetesi Cairan DPPH" di atas kotak lampu terlebih dahulu.');
+                return;
+            }
+            if (labState.isScanning) return;
+            labState.isScanning = true;
+
+            document.getElementById('cam-well-tag').textContent = 'Memindai...';
+            const prev = document.getElementById('cam-color-preview');
+            prev.style.backgroundColor = '#334155';
+            prev.textContent = '...';
+            document.getElementById('cam-sample-name').textContent = 'Membaca Sensor RGB...';
+            document.getElementById('cam-rgb-text').textContent = 'R: ... | G: ... | B: ...';
+            document.getElementById('cam-shift-result').textContent = 'Menganalisis warna sumur...';
+
+            // Simulasi pemindaian kamera HP yang lebih natural & lambat (1.2 detik)
+            setTimeout(() => {
+                labState.isScanning = false;
+                const item = wellSamples[idx];
+                document.getElementById('cam-well-tag').textContent = 'Sumur ' + ['A', 'B', 'C', 'D'][idx];
+                prev.style.backgroundColor = item.bg;
+                prev.textContent = '';
+                document.getElementById('cam-sample-name').textContent = item.name;
+                document.getElementById('cam-rgb-text').textContent = item.rgb;
+                document.getElementById('cam-shift-result').textContent = item.result;
+            }, 1200);
+        }
+
+        // =========================================================
+        // STAGE 5: SIMULASI MEKANISME BIOLOGIS SEL PARU
+        // =========================================================
+        function setShieldSim(step) {
+            const shield = document.getElementById('sim5-shield-arc');
+            const caption = document.getElementById('sim5-caption-box');
+            const cells = [document.getElementById('cell-1'), document.getElementById('cell-2'), document.getElementById('cell-3')];
+
+            // Reset tombol
+            for (let i = 0; i < 3; i++) {
+                document.getElementById('btn-sim5-' + i).className = 'p-2 rounded-xl bg-slate-950 border-2 border-slate-800 hover:border-slate-600 text-left transition';
+            }
+
+            if (step === 0) {
+                document.getElementById('btn-sim5-0').className = 'p-2 rounded-xl bg-rose-950/70 border-2 border-rose-500 text-left transition';
+                shield.setAttribute('opacity', '0');
+                cells.forEach(c => {
+                    c.setAttribute('fill', '#7f1d1d');
+                    c.setAttribute('stroke', '#f43f5e');
+                });
+                caption.className = 'bg-rose-950/40 border border-rose-500/40 rounded-xl p-2.5 text-[11px] text-slate-200 leading-relaxed';
+                caption.innerHTML = '<b class="text-rose-300">1. Tanpa Intervensi:</b> Debu halus memicu lonjakan <b>radikal bebas (ROS)</b> yang merusak lemak membran sel hingga memicu kematian sel akibat kelebihan zat besi (<b>ferroptosis</b>).';
+            } else if (step === 1) {
+                document.getElementById('btn-sim5-1').className = 'p-2 rounded-xl bg-amber-950/70 border-2 border-amber-500 text-left transition';
+                shield.setAttribute('opacity', '1');
+                cells.forEach(c => {
+                    c.setAttribute('fill', '#78350f');
+                    c.setAttribute('stroke', '#fbbf24');
+                });
+                caption.className = 'bg-amber-950/40 border border-amber-500/40 rounded-xl p-2.5 text-[11px] text-slate-200 leading-relaxed';
+                caption.innerHTML = '<b class="text-amber-300">2. Antioksidan Langsung:</b> Molekul kuersetin menangkap dan menetralkan radikal bebas sebelum sempat merusak dinding maupun inti sel saluran napas.';
+            } else {
+                document.getElementById('btn-sim5-2').className = 'p-2 rounded-xl bg-emerald-950/70 border-2 border-emerald-500 text-left transition';
+                shield.setAttribute('opacity', '1');
+                cells.forEach(c => {
+                    c.setAttribute('fill', '#065f46');
+                    c.setAttribute('stroke', '#34d399');
+                });
+                caption.className = 'bg-emerald-950/40 border border-emerald-500/40 rounded-xl p-2.5 text-[11px] text-slate-200 leading-relaxed';
+                caption.innerHTML = '<b class="text-emerald-300">3. Aktifkan Sakelar Pertahanan Sel (Jalur Nrf2):</b> Kuersetin merangsang sel memproduksi enzim antioksidan internal (seperti <i>glutathione</i>) sehingga sel lebih tahan terhadap stres oksidatif.';
+            }
+        }
+
+        function playFullShieldSequence() {
+            setShieldSim(0);
+            setTimeout(() => setShieldSim(1), 1400);
+            setTimeout(() => setShieldSim(2), 2800);
+        }
+
+        // =========================================================
+        // RESET PER TAHAP & DRAG-AND-DROP
+        // =========================================================
+        function resetStage1() {
+            labState.ageGroup = 'child';
+            labState.breathMode = 'sport';
+            updateBreathSimulation();
+            showToast('Tahap 1 Diulang', 'Simulasi anatomi dikembalikan ke kondisi awal (Anak/Remaja • Olahraga).');
+        }
+
+        function resetStage2() {
+            labState.s1Powder = false;
+            labState.s1Ethanol = false;
+            labState.s1StirPct = 0;
+            labState.s1Filtered = false;
+
+            document.getElementById('beaker-powder-group').setAttribute('opacity', '0');
+            document.getElementById('beaker-liquid-group').setAttribute('opacity', '0');
+            document.getElementById('glass-rod-in-beaker').setAttribute('opacity', '0');
+            document.getElementById('filter-pour-arrow').setAttribute('opacity', '0.25');
+            document.getElementById('filter-residue-group').setAttribute('opacity', '0');
+            document.getElementById('filter-drip-group').setAttribute('opacity', '0');
+            document.getElementById('filtrate-collected-liquid').setAttribute('opacity', '0');
+            const cupLbl = document.getElementById('filtrate-cup-label');
+            cupLbl.textContent = 'Wadah Filtrat';
+            cupLbl.setAttribute('fill', '#64748b');
+            document.getElementById('beaker-liquid-fill').setAttribute('fill', '#38bdf8');
+            document.getElementById('beaker-liquid-fill').setAttribute('opacity', '0.35');
+            document.getElementById('stir-progress-text').textContent = '0% (Menunggu bahan)';
+            document.getElementById('stir-progress-bar').style.width = '0%';
+            document.getElementById('filtrate-status-text').textContent = 'Belum Disaring';
+            document.getElementById('filtrate-status-text').className = 'font-bold text-slate-300 mt-0.5';
+            document.getElementById('s1-status').textContent = 'Siap Ekstraksi';
+
+            document.getElementById('badge-s1-1').textContent = 'Limbah (0 biaya)';
+            document.getElementById('badge-s1-1').className = 'text-[9px] text-rose-400';
+            document.getElementById('badge-s1-2').textContent = 'Pelarut Semi-Polar';
+            document.getElementById('badge-s1-2').className = 'text-[9px] text-sky-400';
+            document.getElementById('badge-s1-3').textContent = 'Geser / Klik';
+            document.getElementById('badge-s1-3').className = 'text-[9px] text-amber-400';
+            document.getElementById('badge-s1-4').textContent = 'Pisahkan Ampas';
+            document.getElementById('badge-s1-4').className = 'text-[9px] text-emerald-400';
+            document.getElementById('btn-to-s2').disabled = true;
+        }
+
+        function resetStage3() {
+            labState.s2Starch = false;
+            labState.s2Extract = false;
+            labState.s2Baked = false;
+
+            document.getElementById('mold-starch-layer').setAttribute('opacity', '0');
+            document.getElementById('mold-extract-layer').setAttribute('opacity', '0');
+            document.getElementById('mold-status-label').textContent = 'Cawan Kosong';
+            document.getElementById('mold-status-label').className = 'text-[10px] font-semibold text-slate-400 mt-1';
+            document.getElementById('oven-temp-badge').textContent = 'Standby';
+            document.getElementById('oven-temp-badge').className = 'text-[9px] px-2 py-0.5 rounded bg-slate-800 text-slate-400';
+            document.getElementById('oven-heat-led').setAttribute('fill', '#475569');
+            document.getElementById('oven-chamber-bg').setAttribute('fill', '#020617');
+            document.getElementById('oven-film-inside').setAttribute('opacity', '0');
+            document.getElementById('oven-center-hint').textContent = 'Seret / Klik Cetakan Masuk Sini';
+            document.getElementById('oven-center-hint').setAttribute('fill', '#64748b');
+
+            const banner = document.getElementById('film-result-banner');
+            banner.textContent = 'Menunggu adonan dimasukkan ke oven';
+            banner.className = 'w-full text-center text-[10px] py-1.5 px-2 rounded-lg bg-slate-900 text-slate-400 border border-slate-800';
+
+            document.getElementById('badge-s2-1').textContent = 'Gelatinisasi & Pelentur';
+            document.getElementById('badge-s2-1').className = 'text-[9px] text-sky-400';
+            document.getElementById('badge-s2-2').textContent = 'Cegah Rusak Panas';
+            document.getElementById('badge-s2-2').className = 'text-[9px] text-amber-400';
+            document.getElementById('badge-s2-3').textContent = 'Pengeringan Film';
+            document.getElementById('badge-s2-3').className = 'text-[9px] text-orange-400';
+            document.getElementById('btn-to-s3').disabled = true;
+        }
+
+        function resetStage4() {
+            labState.dpphApplied = false;
+            labState.isScanning = false;
+            const laser = document.getElementById('scanner-laser');
+            if (laser) laser.classList.add('hidden');
+
+            for (let i = 0; i < 4; i++) {
+                const well = document.getElementById('well-' + i);
+                if (well) well.style.backgroundColor = '';
+                const card = document.getElementById('well-card-' + i);
+                if (card) card.className = 'p-2.5 rounded-xl bg-slate-950 border-2 border-slate-800 hover:border-purple-400 flex flex-col items-center transition relative';
+            }
+            document.getElementById('cam-well-tag').textContent = 'Siap Pindai';
+            const prev = document.getElementById('cam-color-preview');
+            prev.style.backgroundColor = '';
+            prev.textContent = 'RGB';
+            document.getElementById('cam-sample-name').textContent = 'Pilih Wadah Reaksi';
+            document.getElementById('cam-rgb-text').textContent = 'R: - | G: - | B: -';
+            document.getElementById('cam-shift-result').textContent = 'Menunggu Tetesan';
+        }
+
+        function resetStage5() {
+            setShieldSim(0);
+            showToast('Tahap 5 Diulang', 'Simulasi sel paru dikembalikan ke kondisi awal tanpa pelindung.');
+        }
+
+        function resetAllLab() {
+            resetStage1();
+            resetStage2();
+            resetStage3();
+            resetStage4();
+            resetStage5();
+            goToStage(1);
+            showToast('Simulasi Direset', 'Seluruh tahapan siap dipresentasikan kembali dari awal.');
+        }
+
+        function initDragAndDrop() {
+            let draggedAction = null;
+
+            document.querySelectorAll('[draggable="true"]').forEach(el => {
+                el.addEventListener('dragstart', e => {
+                    draggedAction = el.getAttribute('data-action');
+                    e.dataTransfer.setData('text/plain', draggedAction);
+                });
+            });
+
+            document.querySelectorAll('.drop-target').forEach(zone => {
+                zone.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    zone.classList.add('drag-over');
+                    if (draggedAction === 'stir' && zone.id === 's1-dropzone') {
+                        stirStepClick();
+                    }
+                });
+
+                zone.addEventListener('dragleave', () => {
+                    zone.classList.remove('drag-over');
+                });
+
+                zone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+                    const act = e.dataTransfer.getData('text/plain') || draggedAction;
+
+                    if (zone.id === 's1-dropzone') {
+                        if (act === 'powder') addOnionPowder();
+                        else if (act === 'ethanol') addEthanol();
+                        else if (act === 'stir') stirStepClick();
+                        else if (act === 'filter') filterExtract();
+                    } else if (zone.id === 's2-mix-zone') {
+                        if (act === 'starch') addStarchBase();
+                        else if (act === 'extract-film') addExtractToFilm();
+                    } else if (zone.id === 's2-oven-zone') {
+                        if (act === 'into-oven') castAndDryFilm();
+                    }
+                    draggedAction = null;
+                });
+            });
+        }
+
+        window.onload = function () {
+            initDragAndDrop();
+            updateBreathSimulation();
+            setShieldSim(0);
+        };
+    </script>
+</body>
+</html>
